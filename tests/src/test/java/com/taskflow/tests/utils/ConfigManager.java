@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/**
- * Centralized configuration management.
- * Reads from config.properties, with env var overrides (for CI/CD).
- */
+// Reads from config.properties. Env vars always take priority so the same
+// tests work locally and in GitHub Actions without touching code.
 public class ConfigManager {
 
     private static final Properties properties = new Properties();
@@ -31,7 +29,6 @@ public class ConfigManager {
     }
 
     public String get(String key) {
-        // Environment variables take priority over properties (critical for CI/CD)
         String envValue = System.getenv(key.toUpperCase().replace(".", "_"));
         if (envValue != null && !envValue.isBlank()) return envValue;
 
@@ -45,8 +42,6 @@ public class ConfigManager {
         String value = get(key);
         return (value != null) ? value : defaultValue;
     }
-
-    // ── Convenience helpers ──────────────────────────────────────────────────
 
     public String getBaseUrl() {
         return get("app.base.url", "http://localhost:8080");

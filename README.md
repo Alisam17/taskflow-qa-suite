@@ -1,4 +1,4 @@
-# ⚡ TaskFlow QA Automation Suite
+# TaskFlow QA Automation Suite
 
 [![CI Pipeline](https://github.com/alisam17/taskflow-qa-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/alisam17/taskflow-qa-suite/actions)
 [![Java](https://img.shields.io/badge/Java-17-007396?logo=java)](https://openjdk.org/)
@@ -8,216 +8,179 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docker.com)
 [![Allure](https://img.shields.io/badge/Reports-Allure-FF6347)](https://docs.qameta.io/allure/)
 
-A production-grade QA automation framework built to demonstrate end-to-end testing skills for modern web applications. Features API testing, UI automation with Selenium Grid, contract testing with WireMock, containerized environments, and automated CI/CD reporting.
+A QA automation framework built around a simple Spring Boot task management app. It covers API testing with REST Assured, UI automation with Selenium, contract testing with WireMock, and runs everything through a GitHub Actions pipeline with Allure reports published to GitHub Pages.
 
 ---
 
-## 📐 Architecture
+## Project layout
 
 ```
 taskflow-qa-suite/
-├── app/                          # Spring Boot REST API (System Under Test)
-│   ├── src/main/java/            # Controllers, Services, Models
-│   ├── src/main/resources/       # Config, Thymeleaf templates
-│   └── Dockerfile                # Multi-stage Docker build
+├── app/                          # Spring Boot REST API (the thing being tested)
+│   ├── src/main/java/            # Controllers, services, models
+│   ├── src/main/resources/       # Config, Thymeleaf UI templates
+│   └── Dockerfile
 │
-├── tests/                        # Test Automation Framework
+├── tests/                        # Test automation framework
 │   └── src/test/java/
-│       ├── api/                  # REST Assured API tests
-│       │   ├── TaskCrudApiTest       # Full CRUD with positive + negative cases
-│       │   ├── TaskFilterApiTest     # Data-driven filter & search tests
-│       │   ├── TaskSchemaValidationTest # JSON schema contract tests
-│       │   └── WireMockContractTest  # Consumer-driven contract tests
+│       ├── api/
+│       │   ├── TaskCrudApiTest           # CRUD happy path + negative cases
+│       │   ├── TaskFilterApiTest         # Data-driven filter and search tests
+│       │   ├── TaskSchemaValidationTest  # JSON schema contract tests
+│       │   └── WireMockContractTest      # Stubbed contract tests
 │       ├── ui/
-│       │   ├── pages/DashboardPage   # Page Object Model
-│       │   └── DashboardUiTest       # Selenium WebDriver UI tests
-│       ├── base/                 # BaseApiTest, BaseUiTest
+│       │   ├── pages/DashboardPage       # Page Object Model
+│       │   └── DashboardUiTest           # Selenium tests
+│       ├── base/                 # Shared setup/teardown for API and UI tests
 │       ├── utils/                # DriverManager, ApiClient, ConfigManager, ScreenshotUtil
-│       └── models/               # TaskRequest, TaskResponse (Builder pattern)
+│       └── models/               # Request/response POJOs
 │
-├── docker-compose.yml            # App + Selenium Grid (Hub + Chrome + Firefox)
-├── .github/workflows/ci.yml      # 4-job GitHub Actions CI/CD pipeline
+├── docker-compose.yml            # Spins up the app + Selenium Grid
+├── .github/workflows/ci.yml      # 4-job CI pipeline
 └── README.md
 ```
 
 ---
 
-## 🛠 Tech Stack
+## Tech stack
 
-| Layer | Technology | Purpose |
+| | Technology | What it's used for |
 |---|---|---|
 | Language | Java 17 | Core language |
-| Build | Maven | Dependency management & build |
-| Test Framework | TestNG 7.9 | Test runner, parallel execution, DataProviders |
-| API Testing | REST Assured 5.4 | Fluent HTTP assertions |
-| UI Testing | Selenium WebDriver 4.18 | Browser automation |
-| Driver Management | WebDriverManager 5.8 | Automatic driver binaries |
-| Contract Testing | WireMock 3.4 | API stubs & mock server |
-| Assertions | AssertJ | Fluent, readable assertions |
-| Reporting | Allure 2.25 | Rich HTML reports with screenshots |
-| Containerization | Docker + Compose | Full environment in one command |
-| Browser Grid | Selenium Grid 4.18 | Parallel cross-browser execution |
-| CI/CD | GitHub Actions | Automated 4-stage pipeline |
-| App Framework | Spring Boot 3.2 | REST API (system under test) |
-| Test Data | JavaFaker | Realistic test data generation |
+| Build | Maven | Dependency management |
+| Test runner | TestNG 7.9 | Test execution, parallel runs, DataProviders |
+| API testing | REST Assured 5.4 | HTTP assertions |
+| UI testing | Selenium WebDriver 4.18 | Browser automation |
+| Driver setup | WebDriverManager | Handles driver binaries automatically |
+| Contract testing | WireMock 3.4 | Mock server, API stubs |
+| Assertions | AssertJ | Fluent assertions |
+| Reporting | Allure 2.25 | HTML reports with screenshots |
+| Containers | Docker + Compose | Full environment setup |
+| Browser grid | Selenium Grid 4.18 | Parallel cross-browser execution |
+| CI/CD | GitHub Actions | Automated pipeline |
+| App | Spring Boot 3.2 | The REST API being tested |
 
 ---
 
-## 🚀 Quick Start
+## Getting started
 
-### Prerequisites
-- Java 17+
-- Maven 3.8+
-- Docker & Docker Compose
+You need Java 17+, Maven 3.8+, and Docker.
 
-### Option 1: Run tests locally (requires running app)
+**Run locally:**
 
 ```bash
-# 1. Start the application
+# Start the app
 cd app && mvn spring-boot:run &
 
-# 2. Run all tests
+# Run all tests
 cd tests && mvn test
 
-# 3. Generate & open Allure report
-cd tests && mvn allure:report && mvn allure:serve
+# Open the Allure report
+cd tests && mvn allure:serve
 ```
 
-### Option 2: Run everything with Docker (recommended)
+**Run with Docker (recommended):**
 
 ```bash
-# Start the full environment (app + Selenium Grid)
+# Start everything - app, Selenium Hub, Chrome, Firefox
 docker compose up -d
 
-# View Grid UI: http://localhost:4444/ui
-# View App:     http://localhost:8080
+# Grid UI: http://localhost:4444/ui
+# App:     http://localhost:8080
 
-# Run tests against Docker environment
+# Run tests against Docker
 cd tests && mvn test \
   -Dapp.base.url=http://localhost:8080 \
   -Dselenium.remote=true \
   -Dselenium.grid.url=http://localhost:4444
 
-# Tear down
+# Clean up
 docker compose down -v
 ```
 
-### Option 3: Run specific test groups
+**Run specific tests:**
 
 ```bash
-# API tests only (no browser required)
-mvn test -Dgroups=api
+# Just API tests (no browser needed)
+mvn test -Dtest="TaskCrudApiTest,TaskFilterApiTest,TaskSchemaValidationTest,WireMockContractTest"
 
-# UI tests only
-mvn test -Dgroups=ui
+# Just UI tests
+mvn test -Dtest="DashboardUiTest"
 
-# Specific test class
-mvn test -Dtest=TaskCrudApiTest
-
-# Specific test method
-mvn test -Dtest=TaskCrudApiTest#createTask_withValidData_returns201AndTask
+# One specific method
+mvn test -Dtest="TaskCrudApiTest#createTask_withValidData_returns201AndTask"
 ```
 
 ---
 
-## 📊 Test Coverage
+## What's covered
 
-### API Tests (`/api/tasks`)
+**API tests** (`/api/tasks`):
 
-| Test Class | Scenarios | Focus |
+- `TaskCrudApiTest` - 14 tests covering create, read, update, and delete with positive and negative cases
+- `TaskFilterApiTest` - data-driven tests using `@DataProvider` that run across all valid status and priority values
+- `TaskSchemaValidationTest` - validates the response shape against a JSON schema so silent contract breaks get caught
+- `WireMockContractTest` - tests against a local mock server, including error simulation and request verification
+
+**UI tests:**
+
+- `DashboardUiTest` - 6 tests covering task creation, deletion, stat counter updates, and form validation
+
+---
+
+## Design notes
+
+**Page Object Model** - `DashboardPage` handles all browser interactions. Tests call methods like `dashboardPage.createTask(title, status, priority)` and never touch selectors directly.
+
+**Builder pattern** - `TaskRequest.builder()` makes test data readable. There are also factory methods like `TaskRequest.validTask("title")` for common cases.
+
+**Thread-safe drivers** - `DriverManager` uses `ThreadLocal<WebDriver>` so parallel tests don't share browser instances.
+
+**Config with env var overrides** - `ConfigManager` reads from `config.properties` but environment variables take priority. The same test code runs locally and in CI without any changes.
+
+**Fluent API client** - `ApiClient` wraps REST Assured so test code reads like `api.createTask(request).statusCode(201)` rather than raw boilerplate.
+
+**Screenshot on failure** - `ScreenshotUtil` captures and attaches a screenshot to the Allure report automatically when a UI test fails.
+
+---
+
+## CI/CD pipeline
+
+Four jobs run on every push and pull request:
+
+```
+Push / PR
+  |
+  +-- build-app        Compiles and packages the Spring Boot JAR
+  |
+  +-- api-tests        Starts the app, runs REST Assured and WireMock tests
+  |
+  +-- ui-tests         Starts Docker Selenium Grid, runs Selenium tests
+  |
+  +-- allure-report    Merges results, generates the report, deploys to GitHub Pages
+```
+
+---
+
+## Configuration
+
+Settings live in `tests/src/test/resources/config.properties`. Any value can be overridden with an environment variable (uppercase, dots replaced with underscores).
+
+| Property | Default | Description |
 |---|---|---|
-| `TaskCrudApiTest` | 14 tests | Create, Read, Update, Delete — positive & negative |
-| `TaskFilterApiTest` | 10 tests | Data-driven filter/search with `@DataProvider` |
-| `TaskSchemaValidationTest` | 2 tests | JSON schema contract validation |
-| `WireMockContractTest` | 4 tests | Stubbed contract tests, error simulation |
-
-### UI Tests (Selenium)
-
-| Test Class | Scenarios | Focus |
-|---|---|---|
-| `DashboardUiTest` | 6 tests | Create/delete tasks, stat counters, form validation |
+| `app.base.url` | `http://localhost:8080` | Where the app is running |
+| `browser` | `chrome` | Browser to use (`chrome` or `firefox`) |
+| `browser.headless` | `true` | Run headless |
+| `selenium.remote` | `false` | Use Selenium Grid |
+| `selenium.grid.url` | `http://localhost:4444` | Grid hub URL |
 
 ---
 
-## 🏗 Key Design Patterns
-
-**Page Object Model** — All UI interactions are encapsulated in `DashboardPage`. Tests never touch CSS selectors directly.
-
-**Builder Pattern** — `TaskRequest.builder()` enables clean, readable test data construction with factory methods like `TaskRequest.validTask()` and `TaskRequest.highPriorityTask()`.
-
-**Thread-Safe Driver Management** — `DriverManager` uses `ThreadLocal<WebDriver>` for safe parallel test execution.
-
-**Centralized Config** — `ConfigManager` reads from `config.properties` with environment variable overrides, making the same tests work locally and in CI without code changes.
-
-**Fluent API Client** — `ApiClient` wraps REST Assured with a clean DSL. Tests express intent: `api.createTask(request).statusCode(201)`.
-
-**Data-Driven Testing** — `@DataProvider` in `TaskFilterApiTest` runs the same test across all valid status/priority values.
-
----
-
-## 📈 Allure Report Features
-
-- **Epics / Features / Stories** — Full test hierarchy
-- **Step-by-step breakdowns** — Every `@Step` shows in the report
-- **Automatic screenshots on failure** — `ScreenshotUtil` captures and attaches on any UI test failure
-- **REST Assured request/response logging** — Full HTTP logs attached to each API test
-- **GitHub Pages deployment** — Allure report published automatically on `main` merges
-
----
-
-## ⚙️ CI/CD Pipeline (GitHub Actions)
-
-The pipeline runs 4 parallel/sequential jobs on every push and pull request:
-
-```
-Push/PR
-  │
-  ├── Job 1: build-app         → Compiles & packages the Spring Boot JAR
-  │
-  ├── Job 2: api-tests         → Starts app, runs REST Assured + WireMock tests
-  │
-  ├── Job 3: ui-tests          → Starts Docker Selenium Grid, runs UI tests
-  │
-  └── Job 4: allure-report     → Merges results, generates report, deploys to GitHub Pages
-```
-
----
-
-## 🔧 Configuration
-
-All settings are in `tests/src/test/resources/config.properties`. Every property can be overridden via environment variables (for CI/CD):
-
-| Property | Env Var | Default | Description |
-|---|---|---|---|
-| `app.base.url` | `APP_BASE_URL` | `http://localhost:8080` | Application URL |
-| `browser` | `BROWSER` | `chrome` | Browser (`chrome`/`firefox`) |
-| `browser.headless` | `BROWSER_HEADLESS` | `true` | Run headless |
-| `selenium.remote` | `SELENIUM_REMOTE` | `false` | Use Selenium Grid |
-| `selenium.grid.url` | `SELENIUM_GRID_URL` | `http://localhost:4444` | Grid hub URL |
-
----
-
-## 📁 Sample Allure Report
-
-After running tests, generate the report:
+## Viewing the Allure report
 
 ```bash
 cd tests
-mvn allure:serve   # Generates and opens in browser
+mvn allure:serve
 ```
 
-The report includes: overall pass/fail breakdown, suite hierarchy, per-test timelines, failure screenshots, and full request/response logs for every API call.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/add-performance-tests`
-3. Write tests with proper Allure annotations (`@Epic`, `@Feature`, `@Story`, `@Severity`)
-4. Run locally: `mvn test`
-5. Open a pull request — CI will run automatically
-
----
-
-*Built as a QA portfolio project demonstrating industry-standard automation practices.*
+This generates the report and opens it in your browser. After a CI run, the latest report is also published to GitHub Pages at `https://alisam17.github.io/taskflow-qa-suite/`.

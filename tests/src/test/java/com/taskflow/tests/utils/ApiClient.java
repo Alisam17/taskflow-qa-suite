@@ -16,11 +16,8 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 
-/**
- * Fluent API client wrapper around REST Assured.
- * Centralizes request configuration and provides a clean DSL for tests.
- * All requests are auto-logged to Allure reports.
- */
+// Wraps REST Assured so tests read like plain English.
+// Every request is automatically logged in the Allure report.
 public class ApiClient {
 
     private static final ConfigManager config = ConfigManager.getInstance();
@@ -44,8 +41,6 @@ public class ApiClient {
                 .expectContentType(ContentType.JSON)
                 .build();
     }
-
-    // ── Task CRUD ────────────────────────────────────────────────────────────
 
     public ValidatableResponse getAllTasks() {
         return given(requestSpec)
@@ -116,8 +111,6 @@ public class ApiClient {
                 .when().get(TASKS_ENDPOINT + "/stats")
                 .then();
     }
-
-    // ── Helper: create and return the ID ────────────────────────────────────
 
     public long createAndGetId(TaskRequest task) {
         return createTask(task)

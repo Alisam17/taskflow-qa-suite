@@ -6,12 +6,10 @@ import io.qameta.allure.*;
 import org.testng.annotations.Test;
 
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+import static org.hamcrest.Matchers.greaterThan;
 
-/**
- * JSON Schema validation tests.
- * Ensures the API contract (response shape) never breaks silently.
- * Uses REST Assured's built-in JSON schema validator.
- */
+// Validates that the API response shape matches our JSON schema contract.
+// If a field gets renamed or dropped, these tests catch it before it hits production.
 @Epic("Task Management API")
 @Feature("API Contract / Schema Validation")
 public class TaskSchemaValidationTest extends BaseApiTest {
@@ -31,17 +29,11 @@ public class TaskSchemaValidationTest extends BaseApiTest {
     @Story("Schema Validation")
     @Severity(SeverityLevel.NORMAL)
     public void getTaskList_itemsMatchJsonSchema() {
-        // Create at least one task to ensure the list is non-empty
         api.createAndGetId(TaskRequest.validTask("Schema list test"));
 
         api.getAllTasks()
                 .statusCode(200)
                 .body("size()", greaterThan(0))
                 .body("[0]", matchesJsonSchemaInClasspath("schemas/task-schema.json"));
-    }
-
-    // Static import needed by assertThat below
-    private static int greaterThan(int n) {
-        return n; // used for clarity — actual matcher is from Hamcrest
     }
 }

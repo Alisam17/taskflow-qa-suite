@@ -13,11 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.time.Duration;
 
-/**
- * Thread-safe WebDriver factory using ThreadLocal.
- * Supports Chrome, Firefox, headless mode, and Selenium Grid (remote).
- * Pattern: always call getDriver() — never instantiate WebDriver directly in tests.
- */
+// WebDriver factory using ThreadLocal so parallel tests don't share a browser.
+// Supports local Chrome/Firefox and remote Selenium Grid.
 public class DriverManager {
 
     private static final Logger log = LoggerFactory.getLogger(DriverManager.class);

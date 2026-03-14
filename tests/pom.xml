@@ -17,33 +17,30 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Dependency versions -->
         <testng.version>7.9.0</testng.version>
         <rest-assured.version>5.4.0</rest-assured.version>
         <selenium.version>4.18.1</selenium.version>
         <webdrivermanager.version>5.8.0</webdrivermanager.version>
         <allure.version>2.25.0</allure.version>
+        <allure-maven.version>2.12.0</allure-maven.version>
         <wiremock.version>3.4.2</wiremock.version>
         <jackson.version>2.16.1</jackson.version>
         <lombok.version>1.18.30</lombok.version>
         <assertj.version>3.25.3</assertj.version>
         <faker.version>1.0.2</faker.version>
-
-        <!-- Allure Maven plugin -->
-        <allure-maven.version>2.12.0</allure-maven.version>
         <aspectj.version>1.9.21</aspectj.version>
     </properties>
 
     <dependencies>
 
-        <!-- ==================== TEST FRAMEWORK ==================== -->
+        <!-- Test framework -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
         </dependency>
 
-        <!-- ==================== API TESTING ==================== -->
+        <!-- API testing -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -60,7 +57,7 @@
             <version>${rest-assured.version}</version>
         </dependency>
 
-        <!-- ==================== UI TESTING ==================== -->
+        <!-- UI testing -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
@@ -72,7 +69,7 @@
             <version>${webdrivermanager.version}</version>
         </dependency>
 
-        <!-- ==================== ALLURE REPORTING ==================== -->
+        <!-- Allure reporting -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-testng</artifactId>
@@ -84,19 +81,20 @@
             <version>${allure.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-selenide</artifactId>
-            <version>${allure.version}</version>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
-        <!-- ==================== WIREMOCK ==================== -->
+        <!-- WireMock -->
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
             <version>${wiremock.version}</version>
         </dependency>
 
-        <!-- ==================== UTILITIES ==================== -->
+        <!-- Utilities -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -123,8 +121,6 @@
             <artifactId>javafaker</artifactId>
             <version>${faker.version}</version>
         </dependency>
-
-        <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -141,7 +137,6 @@
     <build>
         <plugins>
 
-            <!-- Compiler plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -159,7 +154,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Surefire plugin for TestNG -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -169,10 +163,15 @@
                         <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
                     </suiteXmlFiles>
                     <argLine>
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                        -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
                     </argLine>
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                        <app.base.url>${app.base.url}</app.base.url>
+                        <browser>${browser}</browser>
+                        <browser.headless>${browser.headless}</browser.headless>
+                        <selenium.remote>${selenium.remote}</selenium.remote>
+                        <selenium.grid.url>${selenium.grid.url}</selenium.grid.url>
                     </systemPropertyVariables>
                     <properties>
                         <property>
@@ -190,7 +189,6 @@
                 </dependencies>
             </plugin>
 
-            <!-- Allure Maven plugin -->
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>

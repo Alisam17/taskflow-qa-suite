@@ -13,20 +13,14 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.List;
 
-/**
- * Page Object Model for the TaskFlow Dashboard page.
- *
- * Encapsulates all UI interactions so test code reads like plain English.
- * Tests never interact with WebDriver or CSS selectors directly —
- * all interactions go through this class.
- */
+// Page Object for the dashboard. Tests call methods here instead of
+// touching selectors or WebDriver directly.
 public class DashboardPage {
 
     private static final Logger log = LoggerFactory.getLogger(DashboardPage.class);
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // ─── Form elements ───────────────────────────────────────────────────────
     @FindBy(id = "title")
     private WebElement titleInput;
 
@@ -39,7 +33,6 @@ public class DashboardPage {
     @FindBy(id = "add-task-btn")
     private WebElement addTaskButton;
 
-    // ─── Stats elements ──────────────────────────────────────────────────────
     @FindBy(id = "stat-total")
     private WebElement statTotal;
 
@@ -52,7 +45,6 @@ public class DashboardPage {
     @FindBy(id = "stat-done")
     private WebElement statDone;
 
-    // ─── Task table ──────────────────────────────────────────────────────────
     @FindBy(id = "tasks-table")
     private WebElement tasksTable;
 
@@ -65,16 +57,12 @@ public class DashboardPage {
         PageFactory.initElements(driver, this);
     }
 
-    // ─── Navigation ──────────────────────────────────────────────────────────
-
     @Step("Verify dashboard page is loaded")
     public DashboardPage verifyPageLoaded() {
         wait.until(ExpectedConditions.titleContains("TaskFlow"));
         log.info("Dashboard page loaded: {}", driver.getTitle());
         return this;
     }
-
-    // ─── Create task form ────────────────────────────────────────────────────
 
     @Step("Enter task title: {title}")
     public DashboardPage enterTitle(String title) {
@@ -99,7 +87,6 @@ public class DashboardPage {
     @Step("Click 'Add Task' button")
     public DashboardPage clickAddTask() {
         addTaskButton.click();
-        // Wait for page to reload after form submission
         wait.until(ExpectedConditions.stalenessOf(addTaskButton));
         return new DashboardPage(driver).verifyPageLoaded();
     }
