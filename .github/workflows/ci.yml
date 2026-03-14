@@ -131,12 +131,18 @@ jobs:
             sleep 3
           done
           echo "App never started" && exit 1
+      - name: Get Docker bridge gateway IP
+        id: docker-gateway
+        run: |
+          DOCKER_HOST_IP=$(docker inspect selenium-hub --format='{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}')
+          echo "ip=$DOCKER_HOST_IP" >> $GITHUB_OUTPUT
+          echo "Chrome nodes will reach the app at http://$DOCKER_HOST_IP:8080"
       - name: Run UI tests
         run: |
           cd tests
           mvn test \
             -Dtest="DashboardUiTest" \
-            -Dapp.base.url=http://localhost:8080 \
+            -Dapp.base.url=http://${{ steps.docker-gateway.outputs.ip }}:8080 \
             -Dselenium.remote=true \
             -Dselenium.grid.url=http://localhost:4444 \
             -Dbrowser.headless=true

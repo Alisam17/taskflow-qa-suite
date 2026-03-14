@@ -38,6 +38,5 @@
       "type": ["string", "null"],
       "description": "ISO 8601 last-updated timestamp"
     }
-  },
-  "additionalProperties": false
+  }
 }
