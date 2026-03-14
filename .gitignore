@@ -1,0 +1,29 @@
+# Compiled
+target/
+*.class
+*.jar
+*.war
+
+# Maven
+.mvn/timing.properties
+
+# IDEs
+.idea/
+*.iml
+.eclipse/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test output
+allure-results/
+allure-report/
+logs/
+
+# Environment
+.env
+*.local

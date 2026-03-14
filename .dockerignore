@@ -1,0 +1,11 @@
+target/
+*.class
+*.jar
+!app/target/*.jar
+.git/
+.idea/
+*.iml
+node_modules/
+allure-results/
+allure-report/
+logs/

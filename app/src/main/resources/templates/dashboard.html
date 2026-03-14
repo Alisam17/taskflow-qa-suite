@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Task Manager</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        header { background: #1a1a2e; color: white; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+        header h1 { font-size: 1.5rem; font-weight: 700; }
+        .subtitle { font-size: 0.85rem; color: #aaa; }
+        .container { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
+
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #1a1a2e; }
+        .stat-label { font-size: 0.8rem; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Form */
+        .form-card { background: white; border-radius: 10px; padding: 24px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .form-card h2 { margin-bottom: 16px; font-size: 1.1rem; color: #1a1a2e; }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; font-weight: 600; color: #555; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+        .btn-add { background: #4361ee; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; height: 40px; }
+        .btn-add:hover { background: #3451d1; }
+
+        /* Task table */
+        .tasks-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+        .tasks-card h2 { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; font-size: 1.1rem; color: #1a1a2e; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; text-align: left; padding: 12px 16px; font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-TODO { background: #e0e7ff; color: #4361ee; }
+        .badge-IN_PROGRESS { background: #fff3cd; color: #d97706; }
+        .badge-DONE { background: #d1fae5; color: #059669; }
+        .badge-CANCELLED { background: #fee2e2; color: #dc2626; }
+        .badge-LOW { background: #f0fdf4; color: #22c55e; }
+        .badge-MEDIUM { background: #fffbeb; color: #f59e0b; }
+        .badge-HIGH { background: #fff7ed; color: #ea580c; }
+        .badge-CRITICAL { background: #fef2f2; color: #dc2626; }
+
+        /* Delete button */
+        .btn-delete { background: none; border: 1px solid #fca5a5; color: #ef4444; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-delete:hover { background: #fef2f2; }
+        .empty-state { text-align: center; padding: 48px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>⚡ TaskFlow</h1>
+        <div class="subtitle">Task Management System</div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-total" th:text="${stats.total}">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-todo" th:text="${stats.todo}">0</div>
+            <div class="stat-label">To Do</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-inprogress" th:text="${stats.inProgress}">0</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-done" th:text="${stats.done}">0</div>
+            <div class="stat-label">Done</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-cancelled" th:text="${stats.cancelled}">0</div>
+            <div class="stat-label">Cancelled</div>
+        </div>
+    </div>
+
+    <!-- Create Task Form -->
+    <div class="form-card">
+        <h2>Create New Task</h2>
+        <form action="/tasks/create" method="post" id="create-task-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Task Title *</label>
+                    <input type="text" id="title" name="title" placeholder="Enter task title..." required maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="TODO">To Do</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Done</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="CRITICAL">Critical</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add" id="add-task-btn">+ Add Task</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Task List -->
+    <div class="tasks-card">
+        <h2>All Tasks</h2>
+
+        <div th:if="${#lists.isEmpty(tasks)}" class="empty-state">
+            <p>No tasks yet. Create your first task above!</p>
+        </div>
+
+        <table th:if="${!#lists.isEmpty(tasks)}" id="tasks-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="task : ${tasks}" th:attr="data-task-id=${task.id}">
+                <td th:text="${task.id}">#1</td>
+                <td th:text="${task.title}">Task title</td>
+                <td>
+                    <span class="badge" th:classappend="'badge-' + ${task.status}" th:text="${task.status}">TODO</span>
+                </td>
+                <td>
+                    <span class="badge" th:classappend="'badge-' + ${task.priority}" th:text="${task.priority}">MEDIUM</span>
+                </td>
+                <td th:text="${#temporals.format(task.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</td>
+                <td>
+                    <form th:action="'/tasks/' + ${task.id} + '/delete'" method="post" style="display:inline">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

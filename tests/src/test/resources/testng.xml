@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<!--
+    TaskFlow QA Suite — TestNG Configuration
+    ─────────────────────────────────────────
+    Suites:
+      1. API Tests  — REST Assured, WireMock (no browser required)
+      2. UI Tests   — Selenium WebDriver (requires running app + browser)
+
+    Run options:
+      All tests:      mvn test
+      API only:       mvn test -Dgroups=api
+      UI only:        mvn test -Dgroups=ui
+      Smoke only:     mvn test -Dgroups=smoke
+-->
+<suite name="TaskFlow QA Suite" verbose="1" parallel="methods" thread-count="3">
+
+    <parameter name="browser" value="chrome"/>
+    <parameter name="headless" value="true"/>
+
+    <!-- ══════════════ API Tests ══════════════ -->
+    <test name="API - CRUD Tests" group-by-instances="true">
+        <groups>
+            <define name="api">
+                <include name="api"/>
+            </define>
+            <define name="smoke">
+                <include name="smoke"/>
+            </define>
+            <run>
+                <include name="api"/>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.taskflow.tests.api.TaskCrudApiTest"/>
+            <class name="com.taskflow.tests.api.TaskFilterApiTest"/>
+            <class name="com.taskflow.tests.api.TaskSchemaValidationTest"/>
+        </classes>
+    </test>
+
+    <!-- ══════════════ Contract Tests ══════════════ -->
+    <test name="API - Contract / WireMock Tests">
+        <classes>
+            <class name="com.taskflow.tests.api.WireMockContractTest"/>
+        </classes>
+    </test>
+
+    <!-- ══════════════ UI Tests ══════════════ -->
+    <test name="UI - Dashboard Tests">
+        <groups>
+            <define name="ui">
+                <include name="ui"/>
+            </define>
+            <run>
+                <include name="ui"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.taskflow.tests.ui.DashboardUiTest"/>
+        </classes>
+    </test>
+
+</suite>
