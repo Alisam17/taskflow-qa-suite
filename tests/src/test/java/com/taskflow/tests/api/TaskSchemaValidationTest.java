@@ -25,15 +25,18 @@ public class TaskSchemaValidationTest extends BaseApiTest {
                 .body(matchesJsonSchemaInClasspath("schemas/task-schema.json"));
     }
 
-    @Test(description = "Task list response contains items matching task schema")
+    @Test(description = "Task list response matches the expected array schema")
     @Story("Schema Validation")
     @Severity(SeverityLevel.NORMAL)
     public void getTaskList_itemsMatchJsonSchema() {
         api.createAndGetId(TaskRequest.validTask("Schema list test"));
 
+        // Validate the full response body against an array schema.
+        // Using path extraction like [0] returns a deserialized Map rather than
+        // a JSON string, which breaks the json-schema-validator null handling.
+        // Validating the raw body avoids that entirely.
         api.getAllTasks()
                 .statusCode(200)
-                .body("size()", greaterThan(0))
-                .body("[0]", matchesJsonSchemaInClasspath("schemas/task-schema.json"));
+                .body(matchesJsonSchemaInClasspath("schemas/task-list-schema.json"));
     }
 }
