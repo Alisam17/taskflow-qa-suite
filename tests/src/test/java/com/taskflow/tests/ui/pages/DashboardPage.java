@@ -86,8 +86,14 @@ public class DashboardPage {
 
     @Step("Click 'Add Task' button")
     public DashboardPage clickAddTask() {
-        addTaskButton.click();
-        wait.until(ExpectedConditions.stalenessOf(addTaskButton));
+        // Resolve to a real element reference before clicking.
+        // PageFactory proxies re-find elements on every access, so stalenessOf()
+        // on a proxy never returns true (the proxy just finds the element again
+        // on the reloaded page). Using driver.findElement() gives us the actual
+        // underlying reference that goes stale after the POST redirect.
+        WebElement btn = driver.findElement(By.id("add-task-btn"));
+        btn.click();
+        wait.until(ExpectedConditions.stalenessOf(btn));
         return new DashboardPage(driver).verifyPageLoaded();
     }
 

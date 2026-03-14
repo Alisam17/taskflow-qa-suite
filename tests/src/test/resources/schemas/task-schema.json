@@ -16,9 +16,8 @@
       "description": "Task title"
     },
     "description": {
-      "type": ["string", "null"],
       "maxLength": 1000,
-      "description": "Optional task description"
+      "description": "Optional task description, may be null"
     },
     "status": {
       "type": "string",
@@ -35,8 +34,7 @@
       "description": "ISO 8601 creation timestamp"
     },
     "updatedAt": {
-      "type": ["string", "null"],
-      "description": "ISO 8601 last-updated timestamp"
+      "description": "ISO 8601 last-updated timestamp, may be null"
     }
   }
 }
