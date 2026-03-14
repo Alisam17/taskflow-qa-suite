@@ -5,12 +5,7 @@ on:
     branches: [ main, develop, "feature/**" ]
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch:   # Allow manual runs from GitHub Actions UI
-    inputs:
-      test_group:
-        description: 'Test group to run (api / ui / all)'
-        required: false
-        default: 'all'
+  workflow_dispatch:
 
 env:
   JAVA_VERSION: '17'
@@ -18,91 +13,70 @@ env:
 
 jobs:
 
-  # ══════════════════════════════════════════════════════════════════════
-  # Job 1: Build the application
-  # ══════════════════════════════════════════════════════════════════════
   build-app:
     name: Build Spring Boot App
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java ${{ env.JAVA_VERSION }}
+      - uses: actions/checkout@v4
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: maven
-
-      - name: Build application JAR
+      - name: Build JAR
         run: mvn -f app/pom.xml package -DskipTests -q
-
-      - name: Upload application JAR
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: taskflow-app-jar
           path: app/target/*.jar
           retention-days: 1
 
-  # ══════════════════════════════════════════════════════════════════════
-  # Job 2: API Tests (runs against live Spring Boot + WireMock)
-  # ══════════════════════════════════════════════════════════════════════
   api-tests:
     name: API Tests (REST Assured + WireMock)
     runs-on: ubuntu-latest
     needs: build-app
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java ${{ env.JAVA_VERSION }}
+      - uses: actions/checkout@v4
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: maven
-
-      - name: Download application JAR
+      - name: Download JAR
         uses: actions/download-artifact@v4
         with:
           name: taskflow-app-jar
           path: app/target/
-
-      - name: Start TaskFlow application
+      - name: Start app and wait for health
         run: |
           java -jar app/target/*.jar &
-          echo "APP_PID=$!" >> $GITHUB_ENV
-          echo "Waiting for app to start..."
-
-      - name: Wait for application health
-        run: |
-          for i in {1..30}; do
-            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
-              echo "✅ App is healthy"
-              break
+          echo "Waiting for app..."
+          for i in {1..20}; do
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "App is up"
+              exit 0
             fi
-            echo "Attempt $i/30 — waiting..."
+            echo "Attempt $i/20..."
             sleep 3
           done
-
-      - name: Run API tests
+          echo "App never started" && exit 1
+      - name: Run API and contract tests
         run: |
           cd tests
-          mvn test -Dgroups=api -Dapp.base.url=http://localhost:8080 \
-              -Dallure.results.directory=target/allure-results
-
+          mvn test \
+            -Dtest="TaskCrudApiTest,TaskFilterApiTest,TaskSchemaValidationTest,WireMockContractTest" \
+            -Dapp.base.url=http://localhost:8080
       - name: Upload Allure results
-        if: always()   # Upload even on test failure
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-api
           path: tests/target/allure-results
           retention-days: 14
-
-      - name: Upload Surefire reports
+      - name: Upload surefire reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -110,67 +84,57 @@ jobs:
           path: tests/target/surefire-reports
           retention-days: 14
 
-  # ══════════════════════════════════════════════════════════════════════
-  # Job 3: UI Tests (Selenium Grid via Docker)
-  # ══════════════════════════════════════════════════════════════════════
   ui-tests:
     name: UI Tests (Selenium + Docker Grid)
     runs-on: ubuntu-latest
     needs: build-app
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java ${{ env.JAVA_VERSION }}
+      - uses: actions/checkout@v4
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: maven
-
-      - name: Download application JAR
+      - name: Download JAR
         uses: actions/download-artifact@v4
         with:
           name: taskflow-app-jar
           path: app/target/
-
-      - name: Start Selenium Grid (Docker Compose)
+      - name: Start Selenium Grid
         run: |
           docker compose up -d selenium-hub chrome-node
           echo "Waiting for Selenium Grid..."
-          sleep 10
-
-      - name: Start TaskFlow application
-        run: |
-          java -jar app/target/*.jar &
-          echo "Waiting for app..."
-          for i in {1..30}; do
-            curl -sf http://localhost:8080/actuator/health && break || sleep 3
-          done
-
-      - name: Wait for Selenium Grid to be ready
-        run: |
           for i in {1..20}; do
-            STATUS=$(curl -s http://localhost:4444/status | python3 -c "import sys,json; d=json.load(sys.stdin); print('ready' if d.get('value',{}).get('ready') else 'not_ready')" 2>/dev/null)
-            if [ "$STATUS" = "ready" ]; then
-              echo "✅ Selenium Grid is ready"
+            STATUS=$(curl -s http://localhost:4444/status | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('value',{}).get('ready','false'))" 2>/dev/null)
+            if [ "$STATUS" = "True" ]; then
+              echo "Grid is ready"
               break
             fi
-            echo "Attempt $i/20 — Grid not ready yet..."
+            echo "Attempt $i/20..."
             sleep 5
           done
-
-      - name: Run UI tests against Selenium Grid
+      - name: Start app and wait for health
+        run: |
+          java -jar app/target/*.jar &
+          for i in {1..20}; do
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "App is up"
+              exit 0
+            fi
+            echo "Attempt $i/20..."
+            sleep 3
+          done
+          echo "App never started" && exit 1
+      - name: Run UI tests
         run: |
           cd tests
-          mvn test -Dgroups=ui \
-              -Dapp.base.url=http://localhost:8080 \
-              -Dselenium.remote=true \
-              -Dselenium.grid.url=http://localhost:4444 \
-              -Dbrowser.headless=true \
-              -Dallure.results.directory=target/allure-results
-
+          mvn test \
+            -Dtest="DashboardUiTest" \
+            -Dapp.base.url=http://localhost:8080 \
+            -Dselenium.remote=true \
+            -Dselenium.grid.url=http://localhost:4444 \
+            -Dbrowser.headless=true
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -178,55 +142,44 @@ jobs:
           name: allure-results-ui
           path: tests/target/allure-results
           retention-days: 14
-
       - name: Stop Docker services
         if: always()
         run: docker compose down -v
 
-  # ══════════════════════════════════════════════════════════════════════
-  # Job 4: Generate Allure Report (after all tests)
-  # ══════════════════════════════════════════════════════════════════════
   allure-report:
-    name: Generate Allure Report
+    name: Publish Allure Report
     runs-on: ubuntu-latest
     needs: [api-tests, ui-tests]
     if: always()
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download API Allure results
+      - uses: actions/checkout@v4
+      - name: Download API results
         uses: actions/download-artifact@v4
         with:
           name: allure-results-api
           path: allure-results/
         continue-on-error: true
-
-      - name: Download UI Allure results
+      - name: Download UI results
         uses: actions/download-artifact@v4
         with:
           name: allure-results-ui
           path: allure-results/
         continue-on-error: true
-
-      - name: Generate Allure Report
+      - name: Generate Allure report
         uses: simple-elf/allure-report-action@master
         with:
           allure_results: allure-results
           allure_report: allure-report
           allure_history: allure-history
           keep_reports: 30
-
-      - name: Deploy Allure Report to GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-report
-
-      - name: Upload combined Allure report
+      - name: Upload combined report
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-combined
