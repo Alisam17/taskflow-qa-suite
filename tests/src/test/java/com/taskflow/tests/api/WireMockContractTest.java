@@ -4,26 +4,24 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.taskflow.tests.base.BaseApiTest;
 import io.qameta.allure.*;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+// WireMock imports are explicit (not wildcard) to avoid equalTo() clashing with Hamcrest's version
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-/**
- * WireMock contract tests.
- *
- * These tests demonstrate consumer-driven contract testing: they verify that
- * the test code correctly handles specific API responses (stubs) — isolating
- * test logic from the real server. Useful when:
- *   - The API is still under development
- *   - You want to test specific error/edge-case responses reliably
- *   - Running tests without a live server (pure unit-style API tests)
- */
+// Consumer-driven contract tests using WireMock as a local mock server.
+// These run without needing the real app — useful for testing edge cases and error responses.
 @Epic("Task Management API")
 @Feature("Contract Testing / WireMock Stubs")
 public class WireMockContractTest extends BaseApiTest {
